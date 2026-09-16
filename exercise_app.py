@@ -118,6 +118,7 @@ class ExerciseApp(tk.Tk):
         self.reminder_var = tk.StringVar(value="08:00")
         self.todo_items: List[str] = []
         self.notification_var = tk.StringVar(value="SYSTEM READY  /  notifications will appear here")
+        self.toast: Optional[tk.Toplevel] = None
         self._build_style()
         self._build_ui()
         self._tick()
@@ -240,6 +241,34 @@ class ExerciseApp(tk.Tk):
 
     def _notify(self, message: str) -> None:
         self.notification_var.set(f"NOTIFICATION  /  {message}")
+        self._show_toast(message)
+
+    def _show_toast(self, message: str) -> None:
+        """Show a small device-local toast without blocking the app."""
+        if self.toast is not None and self.toast.winfo_exists():
+            self.toast.destroy()
+        self.toast = tk.Toplevel(self)
+        self.toast.overrideredirect(True)
+        self.toast.attributes("-topmost", True)
+        self.toast.configure(bg=self.BLUE)
+        tk.Label(
+            self.toast,
+            text=f"PULSE//PILOT\n{message}",
+            background=self.BLUE,
+            foreground=self.BG,
+            padding=(14, 10),
+            font=("Segoe UI", 10, "bold"),
+        ).pack()
+        self.toast.update_idletasks()
+        x = self.winfo_rootx() + self.winfo_width() - self.toast.winfo_width() - 24
+        y = self.winfo_rooty() + 24
+        self.toast.geometry(f"+{max(0, x)}+{max(0, y)}")
+        self.after(4500, self._close_toast)
+
+    def _close_toast(self) -> None:
+        if self.toast is not None and self.toast.winfo_exists():
+            self.toast.destroy()
+        self.toast = None
 
     def _complete_todo(self) -> None:
         selected = self.todo_list.curselection()
