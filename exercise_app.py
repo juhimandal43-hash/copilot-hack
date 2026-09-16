@@ -116,6 +116,8 @@ class ExerciseApp(tk.Tk):
         self.reminder_job: Optional[str] = None
         self.reminder_enabled = tk.BooleanVar(value=False)
         self.reminder_var = tk.StringVar(value="08:00")
+        self.todo_items: List[str] = []
+        self.notification_var = tk.StringVar(value="SYSTEM READY  /  notifications will appear here")
         self._build_style()
         self._build_ui()
         self._tick()
@@ -140,6 +142,7 @@ class ExerciseApp(tk.Tk):
         root.pack(fill="both", expand=True)
         ttk.Label(root, text="PULSE//PILOT", style="Title.TLabel").pack(anchor="w")
         ttk.Label(root, text="PERSONAL MOVEMENT CONSOLE  /  safe, small steps count", style="Muted.TLabel").pack(anchor="w", pady=(0, 18))
+        ttk.Label(root, textvariable=self.notification_var, style="Muted.TLabel").pack(anchor="w", pady=(0, 10))
         columns = ttk.Frame(root)
         columns.pack(fill="both", expand=True)
         left = ttk.Frame(columns, style="Panel.TFrame", padding=18)
@@ -171,6 +174,25 @@ class ExerciseApp(tk.Tk):
         ttk.Label(right, text="YOUR ROUTE", style="Header.TLabel").pack(anchor="w")
         self.suggestions = tk.Text(right, height=13, bg="#091b2c", fg=self.TEXT, insertbackground=self.TEXT, relief="flat", padx=12, pady=12, font=("Consolas", 10), state="disabled")
         self.suggestions.pack(fill="both", expand=True, pady=(10, 14))
+        ttk.Label(right, text="TODAY'S CHECKLIST", style="Header.TLabel").pack(anchor="w")
+        self.todo_list = tk.Listbox(
+            right,
+            height=5,
+            bg="#102d46",
+            fg=self.TEXT,
+            selectbackground="#1a6f9d",
+            selectforeground=self.TEXT,
+            relief="flat",
+            highlightthickness=0,
+            font=("Consolas", 10),
+        )
+        self.todo_list.pack(fill="x", pady=(8, 6))
+        todo_controls = ttk.Frame(right, style="Panel.TFrame")
+        todo_controls.pack(fill="x", pady=(0, 14))
+        ttk.Button(todo_controls, text="MARK SELECTED DONE", command=self._complete_todo).pack(side="left")
+        ttk.Button(todo_controls, text="RESET", command=self._reset_todos).pack(side="left", padx=(8, 0))
+        self.todo_status = ttk.Label(todo_controls, text="Scan your profile to create today's tasks.", style="Muted.TLabel")
+        self.todo_status.pack(side="left", padx=(12, 0))
         ttk.Label(right, text="SAFETY GUIDANCE", style="Header.TLabel").pack(anchor="w")
         ttk.Label(right, text="Warm up gently. Stop for chest pain, faintness, severe breathlessness, or sharp pain and seek medical help. Hydrate, use good form, and progress gradually. This app is educational—not medical advice.", style="Muted.TLabel", wraplength=520).pack(anchor="w", pady=(8, 0))
 
@@ -188,7 +210,10 @@ class ExerciseApp(tk.Tk):
         self.profile = profile
         assert profile is not None
         self.profile_result.configure(text=f"BMI: {profile.bmi:.1f}\n{profile_label(profile)}")
-        self._write_suggestions(recommend_exercises(profile))
+        suggestions = recommend_exercises(profile)
+        self._write_suggestions(suggestions)
+        self._set_todos(suggestions)
+        self._notify("Profile scanned  /  today's checklist is ready.")
 
     def _write_suggestions(self, items: List[Dict[str, str]]) -> None:
         self.suggestions.configure(state="normal")
@@ -198,6 +223,41 @@ class ExerciseApp(tk.Tk):
             self.suggestions.insert("end", f"{index:02d}  {item['name'].upper()}  ·  {item['duration']}\n    {item['why']}\n\n")
         self.suggestions.configure(state="disabled")
 
+    def _set_todos(self, items: List[Dict[str, str]]) -> None:
+        self.todo_items = [f"[ ] {item['name']} - {item['duration']}" for item in items]
+        self._render_todos()
+
+    def _render_todos(self) -> None:
+        self.todo_list.delete(0, "end")
+        for item in self.todo_items:
+            self.todo_list.insert("end", item)
+        remaining = sum(not item.startswith("[x]") for item in self.todo_items)
+        self.todo_status.configure(
+            text=f"{len(self.todo_items) - remaining}/{len(self.todo_items)} complete"
+            if self.todo_items
+            else "Scan your profile to create today's tasks."
+        )
+
+    def _notify(self, message: str) -> None:
+        self.notification_var.set(f"NOTIFICATION  /  {message}")
+
+    def _complete_todo(self) -> None:
+        selected = self.todo_list.curselection()
+        if not selected:
+            self.todo_status.configure(text="Select an exercise first.")
+            return
+        index = selected[0]
+        item = self.todo_items[index]
+        self.todo_items[index] = f"[x]{item[3:]}" if item.startswith("[ ]") else f"[ ]{item[3:]}"
+        self._render_todos()
+        self.todo_list.selection_set(index)
+        self._notify(f"Checklist updated  /  {self.todo_items[index][4:]}")
+
+    def _reset_todos(self) -> None:
+        self.todo_items = [f"[ ]{item[3:]}" for item in self.todo_items]
+        self._render_todos()
+        self._notify("Checklist reset  /  all exercises are ready to start.")
+
     def _toggle_reminder(self) -> None:
         if self.reminder_enabled.get():
             self._schedule_reminder()
@@ -206,6 +266,7 @@ class ExerciseApp(tk.Tk):
                 self.after_cancel(self.reminder_job)
                 self.reminder_job = None
             self.reminder_status.configure(text="Reminders are off.")
+            self._notify("Daily reminders disabled.")
 
     def _time_changed(self, _event: object = None) -> None:
         if self.reminder_enabled.get():
@@ -223,10 +284,12 @@ class ExerciseApp(tk.Tk):
         delta = max(1000, int((target - datetime.now()).total_seconds() * 1000))
         self.reminder_status.configure(text=f"Next reminder: {target.strftime('%a %d %b, %H:%M')}")
         self.reminder_job = self.after(delta, self._reminder_popup)
+        self._notify(f"Daily reminder set  /  next at {target.strftime('%H:%M')}.")
 
     def _reminder_popup(self) -> None:
         self.reminder_job = None
         if self.reminder_enabled.get():
+            self._notify("Movement break reminder is due.")
             messagebox.showinfo("PULSE//PILOT reminder", "Time for a movement break. Start gently and listen to your body.", parent=self)
             self._schedule_reminder()
 
