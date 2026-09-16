@@ -10,6 +10,25 @@ This project is configured with a [devcontainer](./.devcontainer/devcontainer.js
 
 The project does assume you are familiar with programming, but is not prescriptive about language or framework choice.
 
+## PulsePilot exercise app
+
+This repository also includes a self-contained, standard-library Tkinter exercise helper. It collects age, weight, and height, shows a neutral BMI profile, suggests an adjustable starter routine with concrete push-up, squat, lunge, and plank sets/reps or durations, and includes a daily movement reminder plus visible device-local toast notifications for profile and checklist activity.
+
+Run it from the repository root:
+
+```sh
+python exercise_app.py
+```
+
+Run the pure-logic tests:
+
+```sh
+python -m unittest discover -s tests -v
+python -m py_compile exercise_app.py
+```
+
+Limitations: suggestions are general educational guidance, BMI is only a rough screening measure, and reminders/toasts run only while the app is open (they do not provide phone or background notifications). Consult a qualified clinician for personalized exercise advice; stop and seek medical help for alarming symptoms.
+
 ## License 
 
 This project is licensed under the terms of the MIT open source license. Please refer to [MIT](./LICENSE.txt) for the full terms.
