@@ -19,6 +19,17 @@ class ExerciseLogicTests(unittest.TestCase):
     def test_older_or_higher_bmi_gets_low_impact_route(self):
         suggestions = recommend_exercises(UserProfile(70, 90, 170))
         self.assertEqual(suggestions[0]["name"], "Steady walk")
+        names = {item["name"] for item in suggestions}
+        self.assertIn("Wall push-ups", names)
+        self.assertIn("Incline plank", names)
+
+    def test_standard_route_has_concrete_strength_targets(self):
+        suggestions = recommend_exercises(UserProfile(30, 70, 175))
+        durations = {item["name"]: item["duration"] for item in suggestions}
+        self.assertEqual(durations["Push-ups"], "2 x 5–10 reps")
+        self.assertEqual(durations["Bodyweight squats"], "2 x 8–12 reps")
+        self.assertEqual(durations["Reverse lunges"], "2 x 5 / leg")
+        self.assertEqual(durations["Forearm plank"], "2 x 15–30 sec")
 
     def test_next_reminder_rolls_to_tomorrow(self):
         now = datetime(2026, 9, 16, 9, 0)

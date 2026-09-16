@@ -12,7 +12,7 @@ The project does assume you are familiar with programming, but is not prescripti
 
 ## PulsePilot exercise app
 
-This repository also includes a self-contained, standard-library Tkinter exercise helper. It collects age, weight, and height, shows a neutral BMI profile, suggests an adjustable starter routine, and can display a daily movement reminder.
+This repository also includes a self-contained, standard-library Tkinter exercise helper. It collects age, weight, and height, shows a neutral BMI profile, suggests an adjustable starter routine with concrete push-up, squat, lunge, and plank sets/reps or durations, and can display a daily movement reminder.
 
 Run it from the repository root:
 

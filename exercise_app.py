@@ -62,17 +62,28 @@ def profile_label(profile: UserProfile) -> str:
 
 
 def recommend_exercises(profile: UserProfile) -> List[Dict[str, str]]:
-    """Build gentle, adjustable exercise suggestions from a profile."""
+    """Build gentle, adjustable exercise suggestions from a profile.
+
+    Strength targets are intentionally conservative starting points, not
+    performance requirements. Users can reduce reps, use a wall/chair, or
+    stop early if the movement does not feel comfortable.
+    """
     low_impact = profile.age >= 65 or profile.bmi >= 30
     if low_impact:
         return [
             {"name": "Steady walk", "duration": "15–25 min", "why": "Low-impact cardio; keep a conversational pace."},
-            {"name": "Chair strength circuit", "duration": "2 rounds", "why": "Sit-to-stands, wall push-ups, and calf raises."},
+            {"name": "Wall push-ups", "duration": "2 x 5 reps", "why": "Keep hands on a wall and body straight; rest 45–60 sec."},
+            {"name": "Chair squats", "duration": "2 x 8 reps", "why": "Sit back toward a chair and stand tall; use your hands if needed."},
+            {"name": "Supported lunges", "duration": "2 x 5 / leg", "why": "Hold a chair, step short, and keep the front knee comfortable."},
+            {"name": "Incline plank", "duration": "2 x 15 sec", "why": "Brace gently with hands on a wall or sturdy table."},
             {"name": "Mobility flow", "duration": "8–10 min", "why": "Gentle ankle, hip, shoulder, and back mobility."},
         ]
     return [
         {"name": "Brisk walk or cycle", "duration": "20–30 min", "why": "Build aerobic fitness at a sustainable pace."},
-        {"name": "Full-body strength", "duration": "2–3 rounds", "why": "Squats, push-ups, rows, and a comfortable core exercise."},
+        {"name": "Push-ups", "duration": "2 x 5–10 reps", "why": "Use knees or a wall if needed; rest 60 sec between sets."},
+        {"name": "Bodyweight squats", "duration": "2 x 8–12 reps", "why": "Keep feet steady and sit hips back; use a chair for balance."},
+        {"name": "Reverse lunges", "duration": "2 x 5 / leg", "why": "Step back under control and hold a chair if balance is new."},
+        {"name": "Forearm plank", "duration": "2 x 15–30 sec", "why": "Keep a straight line and stop before your lower back sags."},
         {"name": "Stretch and reset", "duration": "8–10 min", "why": "Easy stretches after warming up; never force a range."},
     ]
 
